@@ -15,20 +15,22 @@ Dataset: [Online Retail II](https://archive.ics.uci.edu/dataset/502/online+retai
 - **Concentración geográfica**: Reino Unido representa ~85% del ingreso total.
 - **Estacionalidad**: pico de ventas claro en noviembre, ambos años — temporada de compras de fin de año.
 - **Cancelaciones**: 23.6% de los pedidos en USA se cancelan (la tasa más alta entre países con volumen confiable), vs. tasas mucho menores en el resto.
-- **Segmentación RFM**: el 25% de los clientes identificados ("Campeones" — compran seguido y recién) genera el 69% del ingreso identificado. El segmento "En riesgo" (compraban seguido, dejaron de volver) es el de mejor costo/beneficio para una campaña de reactivación.
+- **Segmentación RFM**: el 25% de los clientes identificados ("Campeones" — compran seguido y recién) genera el **69% del ingreso** identificado. En el otro extremo, **824 clientes "En riesgo"** compraban con frecuencia y llevan una mediana de **374 días sin volver**: ya demostraron que compran, así que son el segmento de mejor costo/beneficio para una campaña de reactivación.
 
 ## 🛠 Metodología
 
 1. **Limpieza** (`Limpieza.ipynb`): carga y concatenación de las 2 hojas del Excel (1,067,371 filas), identificación de cancelaciones por prefijo de factura, exclusión de 6,207 filas de ajustes contables (`Price <= 0`, no son ventas), eliminación de 34,147 duplicados exactos. Resultado: 1,027,017 filas limpias.
    - Decisión clave: **no se imputa `Customer ID` faltante ni se recortan montos altos como outliers** — ambos destruirían las dos señales de negocio más valiosas del dataset (ver hallazgos arriba).
 2. **Análisis exploratorio**: estadística descriptiva, distribución de ingreso por transacción, serie de tiempo mensual, top productos/países, tasa de cancelación por país (filtrando países con muestra insuficiente para evitar ruido estadístico).
-3. **Segmentación RFM** (Recency, Frequency, Monetary): scoring por quintiles y segmentación por reglas de negocio explícitas (no clustering no supervisado) — prioriza explicabilidad frente a stakeholders no técnicos.
+3. **Segmentación RFM** (Recency, Frequency, Monetary): scoring por quintiles y segmentación por reglas de negocio explícitas (no clustering no supervisado) — prioriza explicabilidad frente a stakeholders no técnicos. Las reglas se evalúan en orden de especificidad, para que un cliente frecuente que dejó de comprar caiga en "En riesgo" y no en "Leales".
+4. **Top de productos**: se excluyen los `StockCode` de servicio (`M`, `POST`, `DOT`, `BANK CHARGES`), que son cargos manuales, envío y comisiones — sin ese filtro el "producto" más vendido resulta ser un cargo administrativo.
 
 ## 📂 Estructura
 
 ```
 Analisis_Retail/
 ├── Limpieza.ipynb       # notebook completo: limpieza + análisis + RFM, ejecutado de punta a punta
+├── retail_rfm.csv       # tabla RFM por cliente (5,878 clientes) — insumo de la etapa SQL
 ├── README.md
 └── .gitignore           # excluye el dataset crudo y el CSV limpio (pesan demasiado para git)
 ```
